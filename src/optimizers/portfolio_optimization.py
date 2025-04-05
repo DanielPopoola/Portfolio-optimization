@@ -75,7 +75,7 @@ symbols = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'GOOGL']
 number_of_symbols = len(symbols)
 
 # If no data is available, grab it from the NASDAQ.
-if not pathlib.Path('src/data/stock_data.csv').exists():
+if not pathlib.Path('../../data/stock_data.csv').exists():
     # Initialize PriceHistory Client
     price_history_client = PriceHistory(symbols=symbols, user_agent=UserAgent().chrome)
     # Grab and dump data in to a csv file.
@@ -87,7 +87,7 @@ if not pathlib.Path('src/data/stock_data.csv').exists():
 
 else:
     # load the existing CSV file
-    price_df: pd.DataFrame = pd.read_csv('src/data/stock_data.csv')
+    price_df: pd.DataFrame = pd.read_csv('../../data/stock_data.csv')
 
 # Grab important columns
 price_df = price_df[['date', 'symbol', 'close']]
