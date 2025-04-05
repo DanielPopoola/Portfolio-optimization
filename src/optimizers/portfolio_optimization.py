@@ -1,266 +1,221 @@
-import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.optimize as sci_opt
-
-from pprint import pprint
-from fake_useragent import UserAgent
-from src.data_fetcher.client import PriceHistory
+import io
+import base64
 
 
-def get_metrics(weights: list) -> np.array:
-    """
-    Overview:
-    ----
-    With a given set of weights, return the portfolio returns,
-    the portfolio volatility, and the portfolio sharpe ratio.
+class PortfolioOptimizer:
+    def __init__(self, price_data: pd.DataFrame):
+        """Initialize with price data dataframe."""
+        self.price_df = price_data
+        # Process data
+        self.price_df = self.price_df[['date', 'symbol', 'close']]
+        self.price_df = self.price_df.pivot(index='date', columns='symbol', values='close')
+        self.log_return = np.log(1 + self.price_df.pct_change())
+        self.symbols = list(self.price_df.columns)
+        self.number_of_symbols = len(self.symbols)
 
-    Arguments:
-    ----
-    weights (list): An array of portfolio weights.
+    def get_metrics(self, weights: list) -> np.array:
+        """
+        Overview:
+        ----
+        With a given set of weights, return the portfolio returns,
+        the portfolio volatility, and the portfolio sharpe ratio.
 
-    Returns:
-    ----
-    (np.array): An array containing return value, a volatility value,
-        and a sharpe ratio.
-    """
-    weights = np.array(weights)
+        Arguments:
+        ----
+        weights (list): An array of portfolio weights.
 
-    ret = np.dot(log_return.mean(), weights) * 252
+        Returns:
+        ----
+        (np.array): An array containg return value, a volatility value,
+            and a sharpe ratio.
+        """
 
-    vol = np.sqrt(
-        np.dot(weights.T, np.dot(log_return.cov() * 252, weights))
-    )
+        # Convert to a Numpy Array.
+        weights = np.array(weights)
 
-    sr = ret / vol
+        # Calculate the returns, remember to annualize them (252).
+        ret = np.dot(self.log_return.mean(), weights) * 252
 
-    return np.array([ret, vol, sr])
-
-
-def neg_sharpe(weights: list) -> np.array:
-    """The function used to minimize the Sharpe Ratio.
-
-    Arguments:
-    ----
-    weights (list): The weights, we are testing to see
-        if it's the minimum.
-
-    Returns:
-    ----
-    (np.array): An numpy array of the portfolio metrics.
-    """
-    return get_metrics(weights)[2] * -1
-
-
-def check_sum(weights: list) -> float:
-    """Ensure the allocations of the "weights", sums to 1 (100%)
-
-    Arguments:
-    ----
-    weights (list): The weights we want to check to see
-        if they sum to 1.
-
-    Returns:
-    ----
-    float: The different between 1 and the sum of the weights.
-    """
-    return np.sum(weights) - 1
-
-
-# Define the symbols
-symbols = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'GOOGL']
-
-# Grab number of stocks in portfolio
-number_of_symbols = len(symbols)
-
-# If no data is available, grab it from the NASDAQ.
-if not pathlib.Path('../../data/stock_data.csv').exists():
-    # Initialize PriceHistory Client
-    price_history_client = PriceHistory(symbols=symbols, user_agent=UserAgent().chrome)
-    # Grab and dump data in to a csv file.
-    price_history_client.price_data_frame.to_csv('src/data/stock_data.csv', index=False)
-    pprint(price_history_client.price_data_frame)
-
-    # store dataframe in variable
-    price_df: pd.DataFrame = price_history_client.price_data_frame
-
-else:
-    # load the existing CSV file
-    price_df: pd.DataFrame = pd.read_csv('../../data/stock_data.csv')
-
-# Grab important columns
-price_df = price_df[['date', 'symbol', 'close']]
-
-# Pivot dataframe to make symbols headers
-price_df = price_df.pivot(index='date', columns='symbol', values='close')
-
-# Calculate the Log of returns.
-log_return = np.log(1 + price_df.pct_change())
-
-# Generate Random Weights.
-random_weights = np.array(np.random.random(number_of_symbols))
-
-# Generate the Rebalance Weights, these should equal 1.
-rebalance_weights = random_weights / np.sum(random_weights)
-
-# Calculate the Expected Returns, annualize it by multiplying it by `252`.
-exp_ret = np.sum((log_return.mean() * rebalance_weights) * 252)
-
-# Calculate the Expected Volatility, annualize it by multiplying it by `252`.
-exp_vol = np.sqrt(
-    np.dot(
-        rebalance_weights.T,
-        np.dot(
-            log_return.cov() * 252,
-            rebalance_weights
+        # Calculate the volatility, remember to annualize them (252).
+        vol = np.sqrt(
+            np.dot(weights.T, np.dot(self.log_return.cov() * 252, weights))
         )
-    )
-)
 
-# Calculate the Sharpe Ratio.
-sharpe_ratio = exp_ret / exp_vol
+        # Calculate the Sharpe Ratio.
+        sr = ret / vol
 
-# Put the weights into a data frame to see them better.
-weights_df = pd.DataFrame(data={
-    'random_weights': random_weights,
-    'rebalance_weights': rebalance_weights
-})
-print(weights_df)
-print('')
+        return np.array([ret, vol, sr])
 
-metrics_df = pd.DataFrame(data={
-    'Expected Portfolio Returns': exp_ret,
-    'Expected Portfolio Volatility': exp_vol,
-    'Portfolio Sharpe Ratio': sharpe_ratio
-}, index=[0])
-print(metrics_df)
+    def neg_sharpe(self, weights: list) -> np.array:
+        """The function used to minimize the Sharpe Ratio.
 
-# Initialize the components, to run a Monte Carlo Simulation.
-# We will run 5000 iterations.
-num_of_portfolios = 5000
+        Arguments:
+        ----
+        weights (list): The weights, we are testing to see
+            if it's the minimum.
 
-# Prep an array to store the weights as they are generated.
-all_weights = np.zeros((num_of_portfolios, number_of_symbols))
+        Returns:
+        ----
+        (np.array): An numpy array of the portfolio metrics.
+        """
+        return self.get_metrics(weights)[2] - 1
 
-# Prep an array to store the returns as they are generated.
-ret_arr = np.zeros(num_of_portfolios)
+    def check_sum(self, weights: list) -> float:
+        """Ensure the allocations of the "weights", sums to 1 (100%)
 
-# Prep an array to store the volatilities as they are generated.
-vol_arr = np.zeros(num_of_portfolios)
+        Arguments:
+        ----
+        weights (list): The weights we want to check to see
+            if they sum to 1.
 
-# Prep an array to store the sharpe ratios as they are generated.
-sharpe_arr = np.zeros(num_of_portfolios)
+        Returns:
+        ----
+        float: The different between 1 and the sum of the weights.
+        """
+        return np.sum(weights) - 1
 
-# Start the simulations.
-for ind in range(num_of_portfolios):
+    def random_portfolio(self):
+        """Generate a random portfolio weights"""
+        random_weights = np.array(np.random.rand(self.number_of_symbols))
+        rebalance_weights = random_weights / np.sum(random_weights)
 
-    # First, calculate the weights.
-    weights = np.array(np.random.random(number_of_symbols))
-    weights = weights / np.sum(weights)
+        metrics = self.get_metrics(rebalance_weights)
 
-    # Add the weights, to the `weights_arrays`.
-    all_weights[ind, :] = weights
+        return {
+            'weights': rebalance_weights,
+            'returns': metrics[0],
+            'volatility': metrics[1],
+            'sharpe_ratio': metrics[2],
+            'weights_by_symbol': dict(zip(self.symbols, rebalance_weights))
+        }
 
-    # Calculate the expected returns, and add them to the `returns_array`.
-    ret_arr[ind] = np.dot(log_return.mean(), weights) * 252
+    def monte_carlo_simulations(self, num_portfolios=5000):
+        """Run Monte Carlo simulation to find optimal portfolios."""
+        all_weights = np.zeros((num_portfolios, self.number_of_symbols))
+        ret_arr = np.zeros(num_portfolios)
+        vol_arr = np.zeros(num_portfolios)
+        sharpe_arr = np.zeros(num_portfolios)
 
-    # Calculate the volatility, and add them to the `volatility_array`.
-    vol_arr[ind] = np.sqrt(
-        np.dot(weights.T, np.dot(log_return.cov() * 252, weights))
-    )
+        for idx in range(num_portfolios):
+            weights = np.array(np.random.random(self.number_of_symbols))
+            weights = weights / np.sum(weights)
+            all_weights[idx, :] = weights
 
-    # Calculate the Sharpe Ratio and Add it to the `sharpe_ratio_array`.
-    sharpe_arr[ind] = ret_arr[ind]/vol_arr[ind]
+            ret_arr[idx] = np.dot(self.log_return.mean(), weights) * 252
+            vol_arr[idx] = np.sqrt(
+                np.dot(weights.T, np.dot(self.log_return.cov() * 252, weights))
+            )
+            sharpe_arr[idx] = ret_arr[idx] / vol_arr[idx]
 
-# Let's add all the different parts together.
-simulations_data = [ret_arr, vol_arr, sharpe_arr, all_weights]
+        # Create results DataFrame
+        results = pd.DataFrame({
+            'Returns': ret_arr,
+            'Volatility': vol_arr,
+            'Sharpe Ratio': sharpe_arr
+        })
 
-# Create a DataFrame from it.
-simulations_df = pd.DataFrame(data=simulations_data).T
-simulations_df.columns = [
-    'Returns',
-    'Volatility',
-    'Sharpe Ratio',
-    'Portfolio Weights'
-]
-simulations_df = simulations_df.infer_objects()
-print(simulations_df.head())
+        # Add weight columns
+        for i, symbol in enumerate(self.symbols):
+            results[f'Weight_{symbol}'] = all_weights[:, i]
 
-# Return the Max Sharpe Ratio from the run.
-max_sharpe_ratio = simulations_df.loc[simulations_df['Sharpe Ratio'].idxmax()]
+        # Find max sharpe ratio and min volatility portfolio
+        max_sharpe_idx = results['Sharpe Ratio'].idxmax()
+        min_vol_idx = results['Volatility'].idxmin()
 
-# Return the Min Volatility from the run.
-min_volatility = simulations_df.loc[simulations_df['Volatility'].idxmin()]
+        max_sharpe_portfolio = {
+            'returns': results.loc[max_sharpe_idx, 'Returns'],
+            'volatility': results.loc[max_sharpe_idx, 'Volatility'],
+            'sharpe_ratio': results.loc[max_sharpe_idx, 'Sharpe Ratio'],
+            'weights_by_symbol': {symbol: results.loc[max_sharpe_idx, f'Weights_{symbol}'] for symbol in self.symbols}
+        }
 
-print('')
-print('='*80)
-print('MAX SHARPE RATIO:')
-print('-'*80)
-print(max_sharpe_ratio)
-print('')
-print('='*80)
-print('MIN VOLATILITY:')
-print('-'*80)
-print(min_volatility)
+        min_vol_portfolio = {
+            'returns': results.loc[min_vol_idx, 'Returns'],
+            'volatility': results.loc[min_vol_idx, 'Volatility'],
+            'sharpe_ratio': results.loc[min_vol_idx, 'Sharpe Ratio'],
+            'weights_by_symbol': {symbol: results.loc[min_vol_idx, f'Weights_{symbol}'] for symbol in self.symbols}
+        }
 
-# Plot the data on a Scatter plot.
-plt.scatter(
-    y=simulations_df['Returns'],
-    x=simulations_df['Volatility'],
-    c=simulations_df['Sharpe Ratio'],
-    cmap='RdYlBu'
-)
+        return {
+            'simulation': results,
+            'max_sharpe_portfolio': max_sharpe_portfolio,
+            'min_vol_portfolio': min_vol_portfolio
+        }
 
-# Plot some details.
-plt.title('Portfolio Returns Vs. Risk')
-plt.colorbar(label='Sharpe Ratio')
-plt.xlabel('Standard Deviation')
-plt.ylabel('Returns')
+    @property
+    def optimize_portfolio(self):
+        """Use scipy to find optimal portfolio weights"""
+        bounds = tuple((0, 1) for _ in range(self.number_of_symbols))
+        constraints = ({'type': 'eq', 'fun': self.check_sum})
+        init_guess = self.number_of_symbols * [1 / self.number_of_symbols]
 
-# Plot the Max Sharpe Ratio.
-plt.scatter(
-    max_sharpe_ratio[1],
-    max_sharpe_ratio[0],
-    marker=(5, 1, 0),
-    color='r',
-    s=600
-)
+        optimized_sharpe = sci_opt.minimize(
+            self.neg_sharpe,
+            init_guess,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints
+        )
 
-# Plot the Min Volatility.
-plt.scatter(
-    min_volatility[1],
-    min_volatility[0],
-    marker=(5, 1, 0),
-    color='b',
-    s=600
-)
+        metrics = self.get_metrics(optimized_sharpe.x)
 
-plt.show()
+        return {
+            'success': optimized_sharpe.success,
+            'weights': optimized_sharpe.x,
+            'returns': metrics[0],
+            'volatility': metrics[1],
+            'sharpe_ratio': metrics[2],
+            'weights_by_symbol': dict(zip(self.symbols, optimized_sharpe.x))
+        }
 
-# Define the boundaries.
-bounds = tuple((0, 1) for symbol in range(number_of_symbols))
+    def generate_efficient_frontier_plot(self, results):
+        """Generate efficient frontier plot and return as base64 image."""
+        plt.figure(figsize=(10, 8))
 
-# Define the constraints.
-constraints = ({'type': 'eq', 'fun': check_sum})
+        # Create scatter plot
+        plt.scatter(
+            x=results['simulations']['Volatility'],
+            y=results['simulations']['Returns'],
+            c=results['simulations']['Sharpe Ratio'],
+            cmap='RdYlBu',
+            alpha=0.7
+        )
 
-# We need to create an initial guess to start with,
-# and usually the best initial guess is just an
-# even distribution
-init_guess: list[float] = number_of_symbols * [1 / number_of_symbols]
+        # Plot max sharpe and min vol portfolios
+        plt.scatter(
+            results['max_sharpe_portfolio']['volatility'],
+            results['max_sharpe_portfolio']['returns'],
+            marker='*',
+            color='r',
+            s=300,
+            label='Max Sharpe Ratio'
+        )
 
-# Perform the operation to minimize the risk.
-optimized_sharpe = sci_opt.minimize(
-    neg_sharpe,
-    init_guess,
-    method='SLSQP',
-    bounds=bounds,
-    constraints=constraints
-)
+        plt.scatter(
+            results['min_volatility_portfolio']['volatility'],
+            results['min_volatility_portfolio']['returns'],
+            marker='*',
+            color='b',
+            s=300,
+            label='Min Volatility'
+        )
 
-# Print the results.
-print(optimized_sharpe)
+        plt.title('Portfolio Optimization - Efficient Frontier')
+        plt.xlabel('Volatility (Standard Deviation)')
+        plt.ylabel('Expected Returns')
+        plt.colorbar(label='Sharpe Ratio')
+        plt.legend()
+        plt.grid(True)
 
-# Grab the metrics.
-optimized_metrics = get_metrics(weights=optimized_sharpe.x)
-print(optimized_metrics)
+        # Convert plot to base64 string for HTML embedding
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_base64 = base64.b64decode(buffer.getvalue()).decode('utf-8')
+        plt.close()
+
+        return f'data:image/png;base64,{image_base64}'
