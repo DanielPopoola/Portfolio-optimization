@@ -141,7 +141,7 @@ class PortfolioOptimizer:
         }
 
         return {
-            'simulation': results,
+            'simulations': results,
             'max_sharpe_portfolio': max_sharpe_portfolio,
             'min_vol_portfolio': min_vol_portfolio
         }
