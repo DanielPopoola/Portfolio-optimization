@@ -181,8 +181,7 @@ class PortfolioOptimizer:
             x=results['simulations']['Volatility'],
             y=results['simulations']['Returns'],
             c=results['simulations']['Sharpe Ratio'],
-            cmap='RdYlBu',
-            alpha=0.7
+            cmap='RdYlBu'
         )
 
         # Plot max sharpe and min vol portfolios
