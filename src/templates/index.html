@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %} - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title">Portfolio Optimization</h2>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form action="{{ url_for('optimize') }}" method="post">
+                    <div class="mb-3">
+                        <label for="symbols" class="form-label">Stock Symbols (comma-separated)</label>
+                        <input type="text" class="form-control" id="symbols" name="symbols"
+                               placeholder="AAPL, MSFT, TSLA, AMZN, GOOGL" required>
+                        <div class="form-text">Default: AAPL, MSFT, TSLA, AMZN, GOOGL</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="num_portfolios" class="form-label">Number of Simulated Portfolios</label>
+                        <input type="number" class="form-control" id="num_portfolios" name="num_portfolios"
+                               value="5000" min="100" max="10000" required>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="refresh_data" name="refresh_data" value="yes">
+                        <label class="form-check-label" for="refresh_data">Refresh stock data</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Optimize Portfolio</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

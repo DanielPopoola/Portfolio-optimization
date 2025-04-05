@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block title %} - Results{% endblock %}
+
+{% block content %}
+<div id="results-container" class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h2>Portfolio Optimization Results</h2>
+                <p class="mb-0">Stocks: {{ symbols|join(', ') }}</p>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ plot_img }}" class="img-fluid" alt="Efficient Frontier">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12 text-center">
+        <button id="toggle-weight-view" class="btn btn-secondary">Show as Chart</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card h-100 portfolio-card">
+            <div class="card-header bg-danger text-white">
+                <h4>Maximum Sharpe Ratio Portfolio</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Expected Return:</strong> {{ "%.2f"|format(max_sharpe.returns * 100) }}%</p>
+                <p><strong>Volatility:</strong> {{ "%.2f"|format(max_sharpe.volatility * 100) }}%</p>
+                <p><strong>Sharpe Ratio:</strong> {{ "%.2f"|format(max_sharpe.sharpe_ratio) }}</p>
+
+                <h5>Weights:</h5>
+                <ul class="list-group weight-list">
+                    {% for symbol, weight in max_sharpe.weights_by_symbol.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ symbol }}
+                        <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(weight * 100) }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="weight-chart d-none" data-weights='{{ max_sharpe.weights_by_symbol|tojson }}'>
+                    <!-- JavaScript will populate this -->
+                </div>
+
+                <button class="btn btn-sm btn-outline-primary mt-3 copy-weights"
+                        data-weights='{{ max_sharpe.weights_by_symbol|tojson }}'>
+                    Copy Weights
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 portfolio-card">
+            <div class="card-header bg-info text-white">
+                <h4>Minimum Volatility Portfolio</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Expected Return:</strong> {{ "%.2f"|format(min_vol.returns * 100) }}%</p>
+                <p><strong>Volatility:</strong> {{ "%.2f"|format(min_vol.volatility * 100) }}%</p>
+                <p><strong>Sharpe Ratio:</strong> {{ "%.2f"|format(min_vol.sharpe_ratio) }}</p>
+
+                <h5>Weights:</h5>
+                <ul class="list-group weight-list">
+                    {% for symbol, weight in min_vol.weights_by_symbol.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ symbol }}
+                        <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(weight * 100) }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="weight-chart d-none" data-weights='{{ min_vol.weights_by_symbol|tojson }}'>
+                    <!-- JavaScript will populate this -->
+                </div>
+
+                <button class="btn btn-sm btn-outline-primary mt-3 copy-weights"
+                        data-weights='{{ min_vol.weights_by_symbol|tojson }}'>
+                    Copy Weights
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 portfolio-card">
+            <div class="card-header bg-warning text-dark">
+                <h4>Scipy Optimized Portfolio</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Expected Return:</strong> {{ "%.2f"|format(optimized.returns * 100) }}%</p>
+                <p><strong>Volatility:</strong> {{ "%.2f"|format(optimized.volatility * 100) }}%</p>
+                <p><strong>Sharpe Ratio:</strong> {{ "%.2f"|format(optimized.sharpe_ratio) }}</p>
+
+                <h5>Weights:</h5>
+                <ul class="list-group weight-list">
+                    {% for symbol, weight in optimized.weights_by_symbol.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ symbol }}
+                        <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(weight * 100) }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="weight-chart d-none" data-weights='{{ optimized.weights_by_symbol|tojson }}'>
+                    <!-- JavaScript will populate this -->
+                </div>
+
+                <button class="btn btn-sm btn-outline-primary mt-3 copy-weights"
+                        data-weights='{{ optimized.weights_by_symbol|tojson }}'>
+                    Copy Weights
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">Run New Optimization</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,65 @@
+body {
+    background-color: #f8f9fa;
+    padding-bottom: 50px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #f5f5f5;
+    line-height: 60px;
+}
+
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card-header {
+    font-weight: bold;
+}
+
+/* Portfolio card highlighting */
+.portfolio-highlight {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Weight visualization */
+.weight-chart {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.weight-bar {
+    height: 30px;
+    margin-bottom: 8px;
+    background-color: #007bff;
+    border-radius: 4px;
+    position: relative;
+    transition: width 0.5s ease;
+    min-width: 2%;  /* Ensure very small weights are still visible */
+}
+
+.weight-label {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 767px) {
+    .weight-label {
+        font-size: 0.75rem;
+    }
+}
