@@ -130,14 +130,14 @@ class PortfolioOptimizer:
             'returns': results.loc[max_sharpe_idx, 'Returns'],
             'volatility': results.loc[max_sharpe_idx, 'Volatility'],
             'sharpe_ratio': results.loc[max_sharpe_idx, 'Sharpe Ratio'],
-            'weights_by_symbol': {symbol: results.loc[max_sharpe_idx, f'Weights_{symbol}'] for symbol in self.symbols}
+            'weights_by_symbol': {symbol: results.loc[max_sharpe_idx, f'Weight_{symbol}'] for symbol in self.symbols}
         }
 
         min_vol_portfolio = {
             'returns': results.loc[min_vol_idx, 'Returns'],
             'volatility': results.loc[min_vol_idx, 'Volatility'],
             'sharpe_ratio': results.loc[min_vol_idx, 'Sharpe Ratio'],
-            'weights_by_symbol': {symbol: results.loc[min_vol_idx, f'Weights_{symbol}'] for symbol in self.symbols}
+            'weights_by_symbol': {symbol: results.loc[min_vol_idx, f'Weight_{symbol}'] for symbol in self.symbols}
         }
 
         return {

@@ -3,7 +3,7 @@ import pandas as pd
 import pathlib
 import numpy as np
 from src.optimizers.portfolio_optimization import PortfolioOptimizer
-from.src.data_fetcher.client import PriceHistory
+from src.data_fetcher.client import PriceHistory
 from fake_useragent import UserAgent
 import json
 
