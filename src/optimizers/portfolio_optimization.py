@@ -146,7 +146,7 @@ class PortfolioOptimizer:
             'min_vol_portfolio': min_vol_portfolio
         }
 
-    @property
+
     def optimize_portfolio(self):
         """Use scipy to find optimal portfolio weights"""
         bounds = tuple((0, 1) for _ in range(self.number_of_symbols))
