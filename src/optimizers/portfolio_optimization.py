@@ -196,8 +196,8 @@ class PortfolioOptimizer:
         )
 
         plt.scatter(
-            results['min_volatility_portfolio']['volatility'],
-            results['min_volatility_portfolio']['returns'],
+            results['min_vol_portfolio']['volatility'],
+            results['min_vol_portfolio']['returns'],
             marker='*',
             color='b',
             s=300,
@@ -215,7 +215,7 @@ class PortfolioOptimizer:
         buffer = io.BytesIO()
         plt.savefig(buffer, format='png')
         buffer.seek(0)
-        image_base64 = base64.b64decode(buffer.getvalue()).decode('utf-8')
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         plt.close()
 
         return f'data:image/png;base64,{image_base64}'
