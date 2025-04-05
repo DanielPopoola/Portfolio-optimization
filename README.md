@@ -4,10 +4,10 @@ This project is a **Portfolio Optimization Tool** that leverages Python and Flas
 
 ## Features
 
-- **Portfolio Optimization**: :contentReference[oaicite:3]{index=3}&#8203;:contentReference[oaicite:4]{index=4}
-- **Data Visualization**: :contentReference[oaicite:5]{index=5}&#8203;:contentReference[oaicite:6]{index=6}
-- **Flask Web Interface**: :contentReference[oaicite:7]{index=7}&#8203;:contentReference[oaicite:8]{index=8}
-
+- **Portfolio Optimization** 
+- **Data Visualization**
+- **Flask Web Interface**
+  
 ## Installation
 
 To set up the project locally, follow these steps:
