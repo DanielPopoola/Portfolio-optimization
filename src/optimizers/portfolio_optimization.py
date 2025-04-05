@@ -46,7 +46,7 @@ class PortfolioOptimizer:
         )
 
         # Calculate the Sharpe Ratio.
-        sr = ret / vol
+        sr = (ret - 0.04009)/ vol
 
         return np.array([ret, vol, sr])
 
@@ -109,7 +109,7 @@ class PortfolioOptimizer:
             vol_arr[idx] = np.sqrt(
                 np.dot(weights.T, np.dot(self.log_return.cov() * 252, weights))
             )
-            sharpe_arr[idx] = ret_arr[idx] / vol_arr[idx]
+            sharpe_arr[idx] = (ret_arr[idx] - 0.04009)/ vol_arr[idx]
 
         # Create results DataFrame
         results = pd.DataFrame({
@@ -181,7 +181,8 @@ class PortfolioOptimizer:
             x=results['simulations']['Volatility'],
             y=results['simulations']['Returns'],
             c=results['simulations']['Sharpe Ratio'],
-            cmap='RdYlBu'
+            cmap='RdYlBu',
+            alpha=0.7
         )
 
         # Plot max sharpe and min vol portfolios
